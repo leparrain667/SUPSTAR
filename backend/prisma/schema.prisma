@@ -1,0 +1,202 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?  @map("password_hash")
+  displayName  String   @map("display_name")
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  oauthAccounts    OAuthAccount[]
+  lists            List[]
+  listMemberships  ListMember[]
+  reviews          Review[]
+  placeStatuses    UserPlaceStatus[]
+  travelPreference TravelPreference?
+  uploadedPhotos   PlacePhoto[]
+  createdPlaces    Place[]
+  notifications    Notification[]
+
+  @@map("users")
+}
+
+model OAuthAccount {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  provider       String
+  providerUserId String   @map("provider_user_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@map("oauth_accounts")
+}
+
+model TravelPreference {
+  userId               String   @id @map("user_id")
+  preferredCategories  String[] @map("preferred_categories")
+  budgetRange          String?  @map("budget_range")
+  preferredLanguages   String[] @map("preferred_languages")
+  notificationSettings Json     @default("{}") @map("notification_settings")
+  updatedAt            DateTime @default(now()) @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("travel_preferences")
+}
+
+model List {
+  id          String   @id @default(uuid())
+  ownerId     String   @map("owner_id")
+  name        String
+  description String?
+  isPersonal  Boolean  @default(false) @map("is_personal")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  owner   User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members ListMember[]
+  places  Place[]
+
+  @@map("lists")
+}
+
+model ListMember {
+  listId   String   @map("list_id")
+  userId   String   @map("user_id")
+  role     String
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  list List @relation(fields: [listId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([listId, userId])
+  @@map("list_members")
+}
+
+model Category {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  places Place[]
+
+  @@map("categories")
+}
+
+model Place {
+  id           String   @id @default(uuid())
+  listId       String   @map("list_id")
+  categoryId   Int?     @map("category_id")
+  name         String
+  address      String?
+  city         String?
+  country      String?
+  description  String?
+  openingHours Json?    @map("opening_hours")
+  priceMin     Decimal? @map("price_min") @db.Decimal(10, 2)
+  priceMax     Decimal? @map("price_max") @db.Decimal(10, 2)
+  // PostGIS: type non géré nativement par Prisma -> lecture/écriture via $queryRaw (voir services/places.service.js)
+  location     Unsupported("geography(Point, 4326)")
+  avgRating    Decimal  @default(0) @map("avg_rating") @db.Decimal(3, 2)
+  reviewCount  Int      @default(0) @map("review_count")
+  createdBy    String?  @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  list     List              @relation(fields: [listId], references: [id], onDelete: Cascade)
+  category Category?         @relation(fields: [categoryId], references: [id])
+  photos   PlacePhoto[]
+  reviews  Review[]
+  tags     PlaceTag[]
+  statuses UserPlaceStatus[]
+  creator  User?             @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@map("places")
+}
+
+model PlacePhoto {
+  id         String   @id @default(uuid())
+  placeId    String   @map("place_id")
+  url        String
+  uploadedBy String?  @map("uploaded_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  place    Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  uploader User? @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+
+  @@map("place_photos")
+}
+
+model Tag {
+  id     Int        @id @default(autoincrement())
+  name   String     @unique
+  places PlaceTag[]
+
+  @@map("tags")
+}
+
+model PlaceTag {
+  placeId String @map("place_id")
+  tagId   Int    @map("tag_id")
+
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([placeId, tagId])
+  @@map("place_tags")
+}
+
+model UserPlaceStatus {
+  userId    String   @map("user_id")
+  placeId   String   @map("place_id")
+  status    String
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, placeId])
+  @@map("user_place_status")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  placeId   String   @map("place_id")
+  userId    String   @map("user_id")
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  place Place @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([placeId, userId])
+  @@map("reviews")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  type      String    @default("general")
+  title     String
+  message   String
+  data      Json      @default("{}")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
