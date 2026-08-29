@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../api/config';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -46,7 +47,7 @@ export default function LoginPage() {
         </button>
       </form>
       <div className="flex items-center gap-3 my-5 text-xs text-ink/40"><span className="h-px bg-line flex-1" />ou<span className="h-px bg-line flex-1" /></div>
-      <a href={`${import.meta.env.VITE_API_URL || `${window.location.origin}/api`}/auth/google`} className="block w-full py-2.5 rounded-card border border-line text-center hover:border-coral transition-colors">Continuer avec Google</a>
+      <a href={`${API_BASE_URL}/auth/google`} className="block w-full py-2.5 rounded-card border border-line text-center hover:border-coral transition-colors">Continuer avec Google</a>
       <p className="text-sm text-ink/60 mt-4">
         Pas de compte ? <Link to="/register" className="text-coral hover:underline">Créer un compte</Link>
       </p>

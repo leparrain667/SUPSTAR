@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../api/config';
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ email: '', password: '', displayName: '' });
@@ -53,6 +54,8 @@ export default function RegisterPage() {
           Créer mon compte
         </button>
       </form>
+      <div className="flex items-center gap-3 my-5 text-xs text-ink/40"><span className="h-px bg-line flex-1" />ou<span className="h-px bg-line flex-1" /></div>
+      <a href={`${API_BASE_URL}/auth/google`} className="block w-full py-2.5 rounded-card border border-line text-center hover:border-coral transition-colors">S’inscrire avec Google</a>
       <p className="text-sm text-ink/60 mt-4">
         Déjà un compte ? <Link to="/login" className="text-coral hover:underline">Se connecter</Link>
       </p>

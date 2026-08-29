@@ -1,14 +1,7 @@
 import axios from 'axios';
+import { API_BASE_URL } from './config';
 
-// Accept either a complete API URL (…/api) or the Render service origin.
-// This keeps deployments resilient to a common Vercel environment-variable mistake.
-const configuredApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-const normalizedApiUrl = configuredApiUrl.replace(/\/+$/, '');
-const apiBaseUrl = normalizedApiUrl === '/api' || normalizedApiUrl.endsWith('/api')
-  ? normalizedApiUrl
-  : `${normalizedApiUrl}/api`;
-
-const api = axios.create({ baseURL: apiBaseUrl });
+const api = axios.create({ baseURL: API_BASE_URL });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('supstar_token');
