@@ -2,6 +2,7 @@ services:
   - type: web
     name: supstar-api
     runtime: node
+    plan: free
     rootDir: backend
     buildCommand: npm ci && npx prisma generate && node scripts/apply-schema.js
     startCommand: node src/server.js
@@ -33,5 +34,6 @@ services:
 
 databases:
   - name: supstar-db
+    plan: free
     databaseName: supstar
     user: supstar
