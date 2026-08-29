@@ -1,5 +1,9 @@
 # SUPSTAR
 
+## Demonstration publique
+
+Application en ligne : <https://supstar-xi.vercel.app/login>
+
 SUPSTAR est une plateforme collaborative de découverte et d'organisation de lieux. Elle permet de créer des listes personnelles ou partagées, gérer les droits des membres, enregistrer des lieux géolocalisés, publier des avis et importer ou exporter les données.
 
 ## Fonctionnalités
@@ -80,6 +84,9 @@ npm run build
 Le test d'intégration crée ses propres données, teste le parcours complet, puis les supprime.
 
 ## Documentation
+
+- [Démonstration publique](docs/PUBLIC_DEMO.md)
+- [Vérification des exigences](docs/REQUIREMENTS.md)
 
 - [Documentation technique](docs/TECHNICAL.md)
 - [Manuel utilisateur](docs/USER_MANUAL.md)
