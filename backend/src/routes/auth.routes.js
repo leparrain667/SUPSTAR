@@ -17,8 +17,13 @@ router.get('/google', (req, res, next) => {
     return res.status(503).json({ error: { message: 'OAuth Google n’est pas configuré' } });
   }
   const state = crypto.randomBytes(32).toString('base64url');
-  const secure = String(process.env.CLIENT_URL || '').startsWith('https://') ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `supstar_oauth_state=${state}; HttpOnly; SameSite=Lax; Path=/api/auth/google; Max-Age=600${secure}`);
+  const secure = String(process.env.CLIENT_URL || '').startsWith('https://');
+  // The callback is a top-level navigation from Google to the API. Use a
+  // root-scoped cookie so every callback path receives the state value.
+  // SameSite=None is required when the deployed frontend/API use different
+  // sites; Secure is enabled automatically for HTTPS deployments.
+  const sameSite = secure ? 'None' : 'Lax';
+  res.setHeader('Set-Cookie', `supstar_oauth_state=${state}; HttpOnly; SameSite=${sameSite}; Path=/; Max-Age=600${secure ? '; Secure' : ''}`);
   return passport.authenticate('google', { scope: ['profile', 'email'], session: false, state })(req, res, next);
 });
 
@@ -29,7 +34,8 @@ function validateOAuthState(req, res, next) {
   }).filter(([key]) => key));
   const expected = cookies.supstar_oauth_state;
   const received = String(req.query.state || '');
-  res.setHeader('Set-Cookie', 'supstar_oauth_state=; HttpOnly; SameSite=Lax; Path=/api/auth/google; Max-Age=0');
+  const secure = String(process.env.CLIENT_URL || '').startsWith('https://');
+  res.setHeader('Set-Cookie', `supstar_oauth_state=; HttpOnly; SameSite=${secure ? 'None' : 'Lax'}; Path=/; Max-Age=0${secure ? '; Secure' : ''}`);
   if (!expected || expected.length !== received.length || !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(received))) {
     return res.status(401).json({ error: { message: 'État OAuth invalide ou expiré' } });
   }
